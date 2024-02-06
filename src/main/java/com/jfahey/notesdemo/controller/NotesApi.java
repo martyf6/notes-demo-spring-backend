@@ -26,8 +26,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.jfahey.notesdemo.dto.NoteRequest;
 import com.jfahey.notesdemo.model.Note;
-import com.jfahey.notesdemo.repository.NoteRepository;
 import com.jfahey.notesdemo.security.exception.ResourceNotFoundException;
+import com.jfahey.notesdemo.service.NotesService;
 
 import jakarta.validation.Valid;
 
@@ -37,7 +37,7 @@ import jakarta.validation.Valid;
 public class NotesApi {
 
     @Autowired
-    private NoteRepository noteRepository;
+    private NotesService notesService;
 
     @PostMapping
     public ResponseEntity<Note> create(
@@ -52,7 +52,7 @@ public class NotesApi {
             userDetails.getUsername(),
             note.getContent()
         );
-        Note savedNote = noteRepository.save(newNote);
+        Note savedNote = notesService.saveNote(newNote);
         URI noteURI = URI.create("/notes/get/" + savedNote.getId());
         return ResponseEntity.created(noteURI).body(savedNote);
     }
@@ -62,7 +62,7 @@ public class NotesApi {
         @AuthenticationPrincipal UserDetails userDetails,
         @PathVariable @RequestBody Long id) {
 
-        return noteRepository.findById(id)
+        return notesService.getNoteById(id)
             //.filter(this::isUpdateAuthorized)
             .filter(note -> isUpdateAuthorized(userDetails,note))
             .map(ResponseEntity.ok()::body)
@@ -75,14 +75,14 @@ public class NotesApi {
         @PathVariable @RequestBody Long id,
         @RequestBody @Valid NoteRequest noteUpdate) {
 
-        return noteRepository.findById(id)
+        return notesService.getNoteById(id)
             //.filter(this::isUpdateAuthorized)
             .filter(note -> isUpdateAuthorized(userDetails,note))
             .map(note -> {
                 note.setTitle(noteUpdate.getTitle());
                 note.setContent(noteUpdate.getContent());
                 note.setLastUpdated(LocalDateTime.now());
-                Note newNote = noteRepository.save(note);
+                Note newNote = notesService.saveNote(note);
                 return ResponseEntity.ok().body(newNote);
             })
             .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
@@ -93,11 +93,11 @@ public class NotesApi {
         @AuthenticationPrincipal UserDetails userDetails,
         @PathVariable @RequestBody Long id) {
 
-        return noteRepository.findById(id)
+        return notesService.getNoteById(id)
             //.filter(this::isUpdateAuthorized)
             .filter(note -> isUpdateAuthorized(userDetails,note))
             .map(note -> {
-                noteRepository.delete(note);
+                notesService.deleteNote(note);
                 return ResponseEntity.ok().body("Note successfully deleted.");
             })
             .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
@@ -109,7 +109,7 @@ public class NotesApi {
         if(userDetails == null)
             return new ResponseEntity<>(Collections.emptyList(), HttpStatus.OK);
 
-        return new ResponseEntity<>(noteRepository.findByUsername(userDetails.getUsername()), HttpStatus.OK);
+        return new ResponseEntity<>(notesService.getNotesByUsername(userDetails.getUsername()), HttpStatus.OK);
     }
 
     /**
