@@ -37,15 +37,18 @@ public class JwtProvider {
         this.jwtHandler = new DefaultJwtHandler();
     }
 
-    public String generateToken(Authentication authentication){
+    public String generateTokenFromAuth(Authentication authentication){
 
         // TODO: implement customer UserDetails mapper
         User user = (User) authentication.getPrincipal();
+        return generateToken(user.getUsername());
+    }
 
+    public String generateToken(String subject){
         Date date = new Date();
 
         return Jwts.builder()
-                .setSubject(user.getUsername())
+                .setSubject(subject)
                 .setIssuedAt(date)
                 .setExpiration(new Date(date.getTime() + jwtExpirationMs))
                 .signWith(SignatureAlgorithm.HS512, jwtSecret)
@@ -89,7 +92,7 @@ public class JwtProvider {
     }
 
     public ResponseEntity<?> getLoginResponseFromAuth(Authentication auth){
-        String token = generateToken(auth);
+        String token = generateTokenFromAuth(auth);
         return jwtHandler.getLoginResponseFromToken(token, auth);
     }
 

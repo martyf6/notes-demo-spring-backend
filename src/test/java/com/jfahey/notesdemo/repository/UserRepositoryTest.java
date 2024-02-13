@@ -1,4 +1,4 @@
-package com.jfahey.notesdemo;
+package com.jfahey.notesdemo.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
  
@@ -11,14 +11,13 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.annotation.Rollback;
 
 import com.jfahey.notesdemo.model.User;
-import com.jfahey.notesdemo.repository.UserRepository;
  
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = Replace.NONE)
 @Rollback(false)
 public class UserRepositoryTest {
  
-    @Autowired 
+    @Autowired
     private UserRepository userRepository;
      
     @Test
