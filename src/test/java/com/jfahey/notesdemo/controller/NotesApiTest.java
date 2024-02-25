@@ -3,6 +3,7 @@ package com.jfahey.notesdemo.controller;
 import java.util.List;
 import java.util.Optional;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -142,6 +143,30 @@ public class NotesApiTest {
                 .andExpect(jsonPath("$.lastUpdated", is(not(emptyString()))));
     }
 
+    @Tag("validation")
+    @Test
+    @WithMockUser(username="user")
+    public void givenNullNoteTitle_whenCreateNote_thenReturnBadRequest() throws Exception {
+
+        // given: note with null title
+        Note note = new Note(null, "user", "Content.");
+
+        // given: (mock)
+        //when(notesService.saveNote(note)).thenReturn(note);
+        when(notesService.saveNote(any(Note.class)))
+                .thenAnswer((invocation)-> invocation.getArgument(0));
+
+        // when: request create new note
+        ResultActions response = this.mockMvc.perform(post("/notes")
+            .with(csrf())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(note)));
+
+        // then: verify bad request
+        response.andDo(print())
+                .andExpect(status().isBadRequest());
+    }
+
     @Test
     @WithMockUser(username="user")
     public void givenNote_whenUpdateNoteId_thenReturnSavedNote() throws Exception {
@@ -149,6 +174,7 @@ public class NotesApiTest {
         long noteId = 1l;
         Note note = new Note("Title", "user", "Content");
         Note updatedNote = new Note("New Title", "user", "New Content");
+
         // given: (mock) existing user's note
         when(notesService.getNoteById(noteId)).thenReturn(Optional.of(note));
         when(notesService.saveNote(any(Note.class)))
@@ -191,6 +217,31 @@ public class NotesApiTest {
         // then: verify not found returned
         response.andDo(print())
                 .andExpect(status().isNotFound());
+    }
+
+    @Tag("validation")
+    @Test
+    @WithMockUser(username="user")
+    public void givenNullNoteTitle_whenUpdateNoteId_thenReturnBadRequest() throws Exception {
+
+        // given: note with null title
+        long noteId = 1l;
+        Note note = new Note(null, "user", "Content.");
+
+        // given: (mock) existing user's note
+        when(notesService.getNoteById(noteId)).thenReturn(Optional.of(note));
+        when(notesService.saveNote(any(Note.class)))
+            .thenAnswer((invocation)-> invocation.getArgument(0));
+
+        // when: request update on note with null title
+        ResultActions response = this.mockMvc.perform(put("/notes/update/{id}", noteId)
+            .with(csrf())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(note)));
+
+        // then: verify bad request
+        response.andDo(print())
+                .andExpect(status().isBadRequest());
     }
 
     @Test

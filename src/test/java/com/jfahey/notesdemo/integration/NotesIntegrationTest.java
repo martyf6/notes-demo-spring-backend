@@ -66,7 +66,7 @@ public class NotesIntegrationTest {
     }
 
     @Test
-    public void givenNoteId_whenGetNoteById_thenReturnNote() throws Exception {
+    public void givenNote_whenGetNoteById_thenReturnNote() throws Exception {
         
         // given: user and user's existing note
         User user = generateTestUser();
